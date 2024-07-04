@@ -46,10 +46,8 @@ func TestAddGetDelete(t *testing.T) {
 	// проверьте, что значения всех полей в полученном объекте совпадают со значениями полей в переменной parcel
 	resGet, err := store.Get(resAdd)
 	require.NoError(t, err)
-	assert.Equal(t, resGet.Address, parcel.Address)
-	assert.Equal(t, resGet.CreatedAt, parcel.CreatedAt)
-	assert.Equal(t, resGet.Status, parcel.Status)
-	assert.Equal(t, resGet.Client, parcel.Client)
+	parcel.Number = resGet.Number
+	assert.Equal(t, resGet, parcel)
 	// delete
 	// удалите добавленную посылку, убедитесь в отсутствии ошибки
 	// проверьте, что посылку больше нельзя получить из БД
@@ -117,7 +115,6 @@ func TestGetByClient(t *testing.T) {
 		getTestParcel(),
 		getTestParcel(),
 	}
-	parcelMap := map[int]Parcel{}
 
 	// задаём всем посылкам один и тот же идентификатор клиента
 	client := randRange.Intn(10_000_000)
@@ -132,11 +129,7 @@ func TestGetByClient(t *testing.T) {
 		require.NotEmpty(t, id)
 		// обновляем идентификатор добавленной у посылки
 		parcels[i].Number = id
-
-		// сохраняем добавленную посылку в структуру map, чтобы её можно было легко достать по идентификатору посылки
-		parcelMap[id] = parcels[i]
 	}
-
 	// get by client
 	storedParcels, err := store.GetByClient(client) // получите список посылок по идентификатору клиента, сохранённого в переменной client
 	require.NoError(t, err)
@@ -144,10 +137,5 @@ func TestGetByClient(t *testing.T) {
 	// убедитесь, что количество полученных посылок совпадает с количеством добавленных
 	require.Equal(t, len(storedParcels), len(parcels))
 	// check
-	for _, parcel := range storedParcels {
-		// в parcelMap лежат добавленные посылки, ключ - идентификатор посылки, значение - сама посылка
-		// убедитесь, что все посылки из storedParcels есть в parcelMap
-		// убедитесь, что значения полей полученных посылок заполнены верно
-		assert.Equal(t, parcel, parcelMap[parcel.Number])
-	}
+	assert.EqualValues(t, storedParcels, parcels)
 }
